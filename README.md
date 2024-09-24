@@ -4,13 +4,10 @@
 
 Reminder: For terminal only !!
 
-You can directly download or:
 ```shell
 git clone https://github.com/uniqueunique7x7/BinanceMoonBix.git
 cd BinanceMoonBix
 ```
-
-Then you can run by clicking xmoon.bat or:
 
 ```shell
 php MoonBix.php
