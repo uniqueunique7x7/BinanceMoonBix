@@ -1,862 +1,338 @@
 <?php
 
-
-
-class MoonBix
-
-{
-
+class MoonBix {
     private $token;
-
     private $headers;
-
     private $game_response;
-
     private $curr_time;
-
     private $rs;
-
     private $log;
-
     private $accessToken;
 
-
-
-    public function __construct($token)
-
-    {
-
+    public function __construct($token) {
         $this->token = $token;
-
         $this->curr_time = round(microtime(true) * 1000);
 
-
-
         $this->headers = [
-
-            "authority: www.binance.com",
-
-            "accept: */*",
-
-            "accept-language: en-US,en;q=0.9,ar-US;q=0.8,ar;q=0.7,en-GB;q=0.6,en-US;q=0.5",
-
-            "clienttype: web",
-
-            "content-type: application/json",
-
-            "lang: en",
-
-            "origin: https://www.binance.com",
-
-            "referer: https://www.binance.com/en/game/tg/moon-bix",
-
+            'authority: www.binance.com',
+            'accept: */*',
+            'accept-language: en-US,en;q=0.9,ar-US;q=0.8,ar;q=0.7,en-GB;q=0.6,en-US;q=0.5',
+            'clienttype: web',
+            'content-type: application/json',
+            'lang: en',
+            'origin: https://www.binance.com',
+            'referer: https://www.binance.com/en/game/tg/moon-bix',
             'sec-ch-ua: "Not.A/Brand";v="8", "Chromium";v="114", "Google Chrome";v="114"',
-
-            "sec-ch-ua-mobile: ?0",
-
+            'sec-ch-ua-mobile: ?0',
             'sec-ch-ua-platform: "Windows"',
-
-            "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-
+            'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
         ];
-
     }
 
-
-
-    private function request($url, $data = [], $method = "POST")
-
-    {
-
+    private function request($url, $data = [], $method = 'POST') {
         $curl = curl_init();
-
         $options = [
-
             CURLOPT_URL => $url,
-
             CURLOPT_RETURNTRANSFER => true,
-
             CURLOPT_HTTPHEADER => $this->headers,
-
             CURLOPT_POST => true,
-
             CURLOPT_POSTFIELDS => json_encode($data),
-
         ];
-
-
 
         curl_setopt_array($curl, $options);
-
         $response = curl_exec($curl);
-
         curl_close($curl);
-
         return json_decode($response, true);
-
     }
 
-
-
-    public function login()
-
-    {
-
+    public function login() {
         $data = [
-
             "queryString" => $this->token,
-
-            "socialType" => "telegram",
-
+            "socialType" => "telegram"
         ];
 
+        $response = $this->request('https://www.binance.com/bapi/growth/v1/friendly/growth-paas/third-party/access/accessToken', $data);
 
-
-        $response = $this->request(
-
-            "https://www.binance.com/bapi/growth/v1/friendly/growth-paas/third-party/access/accessToken",
-
-            $data
-
-        );
-
-
-
-        if ($response && isset($response["data"]["accessToken"])) {
-
-            $this->accessToken = $response["data"]["accessToken"];
-
-            $this->headers[] = "x-growth-token: " . $this->accessToken;
-
+        if ($response && isset($response['data']['accessToken'])) {
+            $this->accessToken = $response['data']['accessToken'];
+            $this->headers[] = 'x-growth-token: ' . $this->accessToken;
             return true;
-
         }
 
-
-
         return false;
-
     }
 
-
-
-    public function user_info()
-
-    {
-
-        $data = ["resourceId" => 2056];
-
-        return $this->request(
-
-            "https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/user/user-info",
-
-            $data
-
-        );
-
+    public function user_info() {
+        $data = ['resourceId' => 2056];
+        return $this->request('https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/user/user-info', $data);
     }
 
-
-
-    public function get_list_tasks()
-
-    {
-
-        $data = ["resourceId" => 2056];
-
-        return $this->request(
-
-            "https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/task/list",
-
-            $data
-
-        );
-
+    public function get_list_tasks() {
+        $data = ['resourceId' => 2056];
+        return $this->request('https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/task/list', $data);
     }
 
-
-
-    public function complete_task($resourceId)
-
-    {
-
+    public function complete_task($resourceId) {
         $data = [
-
             "resourceIdList" => [$resourceId],
-
-            "refferalCode" => "",
-
+            "refferalCode" => ""
         ];
 
+        $response = $this->request('https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/task/complete', $data);
 
-
-        $response = $this->request(
-
-            "https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/task/complete",
-
-            $data
-
-        );
-
-
-
-        return isset($response["success"]) ? $response["success"] : false;
-
+        return isset($response['success']) ? $response['success'] : false;
     }
 
-
-
-    public function start_game()
-
-    {
-
-        $data = ["resourceId" => 2056];
-
-        $response = $this->request(
-
-            "https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/game/start",
-
-            $data
-
-        );
-
-
+    public function start_game() {
+        $data = ['resourceId' => 2056];
+        $response = $this->request('https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/game/start', $data);
 
         $this->game_response = $response;
 
-
-
-        if ($response && $response["code"] == "000000") {
-
+        if ($response && $response['code'] == '000000') {
             return true;
-
         }
 
-
-
-        if (isset($response["code"]) && $response["code"] == "116002") {
-
+        if (isset($response['code']) && $response['code'] == '116002') {
             echo "Attempts not enough!\n";
-
         } else {
-
             echo "ERROR!\n";
-
         }
-
-
 
         return false;
-
     }
 
-
-
-    private function random_data_type($type, $end_time, $item_size, $item_pts)
-
-    {
-
-        $end_time = (int) $end_time;
-
+    private function random_data_type($type, $end_time, $item_size, $item_pts) {
+        // Convert end time to integer
+        $end_time = (int)$end_time;
+        // Calculate the pick time based on current time and a random sleep duration
         $pick_time = $this->curr_time + $this->rs;
-
+        
+        // Ensure pick time does not exceed end time
         if ($pick_time >= $end_time) {
-
-            $pick_time = $end_time - 1000; // Ensure pick_time does not exceed end_time
-
+            $pick_time = $end_time - 1000; // Avoid picking in the last 1000 milliseconds
         }
-
-
-
-        // Updated randomization logic for game item actions
-
-        $hook_pos_x = round(mt_rand(50, 300) + mt_rand() / mt_getrandmax(), 3); // Updated from 75-275 to 50-300
-
-        $hook_pos_y = round(mt_rand(180, 260) + mt_rand() / mt_getrandmax(), 3); // Updated from 199-251 to 180-260
-
-        $hook_shot_angle = round(
-
-            mt_rand(-2, 2) + mt_rand() / mt_getrandmax(),
-
-            3
-
-        ); // Updated angle from -1,1 to -2,2
-
-        $hook_hit_x = round(mt_rand(120, 450) + mt_rand() / mt_getrandmax(), 3); // Updated from 100-400 to 120-450
-
-        $hook_hit_y = round(mt_rand(270, 720) + mt_rand() / mt_getrandmax(), 3); // Updated from 250-700 to 270-720
-
-
-
-        if ($type == 1) {
-
+    
+        // Randomly generate hook positions and shot angle
+        $hook_pos_x = round(mt_rand(75, 275) + mt_rand() / mt_getrandmax(), 3);
+        $hook_pos_y = round(mt_rand(199, 251) + mt_rand() / mt_getrandmax(), 3);
+        $hook_shot_angle = round(mt_rand(-1, 1) + mt_rand() / mt_getrandmax(), 3);
+        $hook_hit_x = round(mt_rand(100, 400) + mt_rand() / mt_getrandmax(), 3);
+        $hook_hit_y = round(mt_rand(250, 700) + mt_rand() / mt_getrandmax(), 3);
+    
+        // Determine item type and point values based on the type parameter
+        if ($type == 1) { // Coin
             $item_type = 1;
-
-            $item_s = $item_size;
-
-            $point = mt_rand(10, 220); // Updated from 1-200 to 10-220
-
-        } elseif ($type == 2) {
-
+            $item_s = $item_size; // Size of the item
+            $point = mt_rand(20, 300); // Increase the range of random points for coins
+        } elseif ($type == 2) { // Bonus
             $item_type = 2;
-
-            $item_s = $item_size;
-
-            $point = $item_size + $item_pts;
-
-        } elseif ($type == 0) {
-
+            $item_s = $item_size; // Size of the bonus item
+            $point = $item_size + $item_pts; // Points for bonus
+        } elseif ($type == 0) { // No item
             $item_type = 0;
-
-            $item_s = $item_size;
-
-            $point = mt_rand(10, 220); // Updated from 1-200 to 10-220
-
-        } else {
-
+            $item_s = $item_size; // Size is still passed in
+            $point = mt_rand(1, 200); // Random point for no item
+        } else { // Default case
+            // Set to default values
             $hook_hit_x = 0;
-
             $hook_hit_y = 0;
-
-            $item_type = mt_rand(0, 2);
-
-            $item_s = mt_rand(5, 110); // Updated from 1-100 to 5-110
-
-            $point = mt_rand(10, 220); // Updated from 1-200 to 10-220
-
+            $item_type = mt_rand(0, 2); // Random item type (either coin or bonus)
+            $item_s = mt_rand(1, 100); // Random size
+            $point = mt_rand(1, 200); // Random point
         }
-
-
-
+    
+        // Return the data as a string formatted with '|' delimiter
         return "{$pick_time}|{$hook_pos_x}|{$hook_pos_y}|{$hook_shot_angle}|{$hook_hit_x}|{$hook_hit_y}|{$item_type}|{$item_s}|{$point}";
-
     }
-
-
-
-    private function encrypt($text, $key)
-
-    {
-
+    
+    private function encrypt($text, $key) {
+        // Generate a random initialization vector (IV)
         $iv = openssl_random_pseudo_bytes(12);
-
-        $iv_base64 = base64_encode($iv);
-
-        $iv16 = substr($iv_base64, 0, 16);
-
-        $cipher = openssl_encrypt(
-
-            $text,
-
-            "AES-256-CBC",
-
-            $key,
-
-            OPENSSL_RAW_DATA,
-
-            $iv16
-
-        );
-
-        $ciphertext_base64 = base64_encode($cipher);
-
+        $iv_base64 = base64_encode($iv); // Encode IV to Base64 for storage
+        $iv16 = substr($iv_base64, 0, 16); // Use first 16 bytes of IV
+        // Encrypt the text using AES-256-CBC
+        $cipher = openssl_encrypt($text, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv16);
+        $ciphertext_base64 = base64_encode($cipher); // Encode ciphertext to Base64
+        // Return concatenated IV and ciphertext
         return $iv_base64 . $ciphertext_base64;
-
     }
-
-
-
-    public function gameData()
-
-    {
-
+    
+    public function gameData() {
         try {
-
-            $timer = 45;
-
-            $end_time = (int) ((microtime(true) + $timer) * 1000); // End time of the game in milliseconds
-
-            $random_pick_time = mt_rand(5, 8); // Updated from Python version (was 2 to 10, now 5 to 8)
-
-            $total_obj = 0;
-
-            $key_for_game = $this->game_response["data"]["gameTag"];
-
-
-
+            $timer = 45; // Game duration
+            $end_time = (int)((microtime(true) + $timer) * 1000); // Calculate end time
+            
+            // Increase random pick time range to allow more picks
+            $random_pick_time = mt_rand(6, 12); // New range for picking items (6 to 12)
+            $total_obj = 0; // Total number of objects available
+            $key_for_game = $this->game_response['data']['gameTag']; // Key for encryption
+    
+            // Initialize object types
             $obj_type = [
-
                 "coin" => [],
-
-                "trap" => [],
-
-                "bonus" => "",
-
+                "bonus" => "" // Trap has been removed as per request
             ];
-
-
-
-            // Parse the game response and categorize items as coins, traps, or bonus
-
-            foreach (
-
-                $this->game_response["data"]["cryptoMinerConfig"][
-
-                    "itemSettingList"
-
-                ]
-
-                as $obj
-
-            ) {
-
-                $total_obj += $obj["quantity"];
-
-                if ($obj["type"] == "BONUS") {
-
-                    $obj_type[
-
-                        "bonus"
-
-                    ] = "{$obj["rewardValueList"][0]},{$obj["size"]}";
-
+    
+            // Process the item settings from the game response
+            foreach ($this->game_response['data']['cryptoMinerConfig']['itemSettingList'] as $obj) {
+                $total_obj += $obj['quantity']; // Update total number of objects
+                if ($obj['type'] == "BONUS") {
+                    $obj_type['bonus'] = "{$obj['rewardValueList'][0]},{$obj['size']}"; // Set bonus info
                 }
-
-                foreach ($obj["rewardValueList"] as $reward) {
-
-                    if ((int) $reward > 0) {
-
-                        $obj_type["coin"][
-
-                            $reward
-
-                        ] = "{$obj["size"]},{$obj["quantity"]}";
-
-                    } else {
-
-                        $obj_type["trap"][
-
-                            abs((int) $reward)
-
-                        ] = "{$obj["size"]},{$obj["quantity"]}";
-
+                foreach ($obj['rewardValueList'] as $reward) {
+                    if ((int)$reward > 0) { // Only consider positive rewards (coins)
+                        $obj_type['coin'][$reward] = "{$obj['size']},{$obj['quantity']}"; // Store coin details
                     }
-
                 }
-
             }
-
-
-
-            $limit = min($total_obj, $random_pick_time);
-
-            $random_pick_sth_times = mt_rand(3, $limit); // Updated from Python version (was mt_rand(1, $limit), now starts from 3)
-
-            $picked_bonus = false;
-
-            $picked = 0;
-
-            $game_data_payload = [];
-
-            $score = 0;
-
-
-
-            // Iterate over the game loop, determining actions to take (coin, trap, or bonus)
-
-            while (
-
-                $end_time > $this->curr_time &&
-
-                $picked < $random_pick_sth_times
-
-            ) {
-
-                $this->rs = mt_rand(2000, 3000); // Updated from Python version (was 1500 to 2500, now 2000 to 3000)
-
-                $random_reward = mt_rand(1, 100); // Random number to decide whether to pick a coin, trap, or bonus
-
-
-
-                // Trap logic
-
-                if ($random_reward <= 30 && count($obj_type["trap"]) > 0) {
-
-                    // Updated condition, now 30% chance for trap
-
+    
+            // Adjust the limit to ensure more coins picked
+            $limit = min($total_obj, $random_pick_time); // Limit can be based on total objects and random pick time
+            $random_pick_sth_times = mt_rand(5, $limit); // Randomly choose how many items to pick (at least 5)
+    
+            $picked_bonus = false; // Flag to track if bonus has been picked
+            $picked = 0; // Count of items picked
+            $game_data_payload = []; // Store game data
+            $score = 0; // Initialize score
+    
+            // Main loop for picking items until time runs out or items are picked
+            while ($end_time > $this->curr_time && $picked < $random_pick_sth_times) {
+                $this->rs = mt_rand(1500, 2500); // Random sleep duration
+                $random_reward = mt_rand(1, 100); // Randomly decide reward type
+                
+                // Adjusting probabilities for coins (90% chance)
+                if ($random_reward <= 90 && count($obj_type['coin']) > 0) {
                     $picked++;
-
-                    $reward_d = array_rand($obj_type["trap"]);
-
-                    $details = explode(",", $obj_type["trap"][$reward_d]);
-
-                    $quantity = $details[1];
-
-                    $item_size = $details[0];
-
-
-
-                    if ((int) $quantity > 0) {
-
-                        $score = max(0, $score - (int) $reward_d);
-
-                        $game_data_payload[] = $this->random_data_type(
-
-                            0,
-
-                            $end_time,
-
-                            $item_size,
-
-                            0
-
-                        );
-
-                        if ((int) $quantity - 1 > 0) {
-
-                            $obj_type["trap"][$reward_d] =
-
-                                "$item_size," . ((int) $quantity - 1);
-
+                    $reward_d = array_rand($obj_type['coin']); // Randomly select a coin
+                    $details = explode(',', $obj_type['coin'][$reward_d]); // Get coin details
+                    $quantity = $details[1]; // Quantity of this coin
+                    $item_size = $details[0]; // Size of the coin
+    
+                    if ((int)$quantity > 0) { // If there's a coin to pick
+                        $score += (int)$reward_d; // Increase score
+                        $game_data_payload[] = $this->random_data_type(1, $end_time, $item_size, 0); // Log the coin data
+                        if ((int)$quantity - 1 > 0) { // Decrement quantity
+                            $obj_type['coin'][$reward_d] = "$item_size," . ((int)$quantity - 1);
                         } else {
-
-                            unset($obj_type["trap"][$reward_d]);
-
+                            unset($obj_type['coin'][$reward_d]); // Remove if quantity is zero
                         }
-
                     }
-
-                }
-
-                // Coin logic
-
-                elseif (
-
-                    $random_reward > 30 &&
-
-                    $random_reward <= 70 &&
-
-                    count($obj_type["coin"]) > 0
-
-                ) {
-
-                    // 40% chance for coin
-
+                // Adjusting probabilities for bonuses (70% chance, but only if bonus not picked yet)
+                } elseif ($random_reward > 90 && $random_reward <= 100 && !$picked_bonus && !empty($obj_type['bonus'])) {
                     $picked++;
-
-                    $reward_d = array_rand($obj_type["coin"]);
-
-                    $details = explode(",", $obj_type["coin"][$reward_d]);
-
-                    $quantity = $details[1];
-
-                    $item_size = $details[0];
-
-
-
-                    if ((int) $quantity > 0) {
-
-                        $score += (int) $reward_d;
-
-                        $game_data_payload[] = $this->random_data_type(
-
-                            1,
-
-                            $end_time,
-
-                            $item_size,
-
-                            0
-
-                        );
-
-                        if ((int) $quantity - 1 > 0) {
-
-                            $obj_type["coin"][$reward_d] =
-
-                                "$item_size," . ((int) $quantity - 1);
-
-                        } else {
-
-                            unset($obj_type["coin"][$reward_d]);
-
-                        }
-
-                    }
-
+                    $picked_bonus = true; // Bonus has been picked
+                    $details = explode(',', $obj_type['bonus']); // Get bonus details
+                    $size = $details[1]; // Size of the bonus
+                    $pts = $details[0]; // Points for the bonus
+                    $score += (int)$pts; // Update score
+                    $game_data_payload[] = $this->random_data_type(2, $end_time, (int)$size, (int)$pts); // Log the bonus data
+                } else {
+                    // Log a no-item event
+                    $game_data_payload[] = $this->random_data_type(-1, $end_time, 0, 0);
                 }
-
-                // Bonus logic
-
-                elseif ($random_reward > 70 && !$picked_bonus) {
-
-                    // 30% chance for bonus, pick only once
-
-                    $picked++;
-
-                    $picked_bonus = true;
-
-                    $details = explode(",", $obj_type["bonus"]);
-
-                    $size = $details[1];
-
-                    $pts = $details[0];
-
-                    $score += (int) $pts;
-
-                    $game_data_payload[] = $this->random_data_type(
-
-                        2,
-
-                        $end_time,
-
-                        (int) $size,
-
-                        (int) $pts
-
-                    );
-
-                }
-
-                // No valid item picked, generate random empty data
-
-                else {
-
-                    $game_data_payload[] = $this->random_data_type(
-
-                        -1,
-
-                        $end_time,
-
-                        0,
-
-                        0
-
-                    );
-
-                }
-
-
-
+    
+                // Update the current time based on the random sleep duration
                 $this->curr_time += $this->rs;
-
             }
-
-
-
-            $data_pl = implode(";", $game_data_payload);
-
-            $game_payload = $this->encrypt($data_pl, $key_for_game);
-
-
-
+    
+            // Prepare the payload data for encryption
+            $data_pl = implode(';', $game_data_payload);
+            $game_payload = $this->encrypt($data_pl, $key_for_game); // Encrypt the data
+    
+            // Set the game data with payload, score, and debug info
             $this->game = [
-
                 "payload" => $game_payload,
-
                 "log" => $score,
-
-                "debug" => $data_pl,
-
+                "debug" => $data_pl
             ];
-
-
-
-            return true;
-
+    
+            return true; // Successfully generated game data
         } catch (Exception $e) {
-
-            error_log(
-
-                "Unknown error while trying to get game data: " .
-
-                    $e->getMessage()
-
-            );
-
-            return false;
-
+            // Log any errors that occur during processing
+            error_log("Unknown error while trying to get game data: " . $e->getMessage());
+            return false; // Return false if an error occurs
         }
-
     }
 
-
-
-    public function complete_game()
-
-    {
+    public function complete_game() {
 
         $data = [
-
-            "resourceId" => 2056,
-
-            "payload" => $this->game["payload"], //fuck payload bullshit
-
-            "log" => $this->game["log"],
-
+            'resourceId' => 2056,
+            'payload' => $this->game['payload'],//fuck payload bullshit
+            'log' => $this->game['log'],
         ];
 
+        $response = $this->request('https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/game/complete', $data);
 
-
-        $response = $this->request(
-
-            "https://www.binance.com/bapi/growth/v1/friendly/growth-paas/mini-app-activity/third-party/game/complete",
-
-            $data
-
-        );
-
-
-
-        return isset($response["success"]) ? $response["success"] : false;
-
+        return isset($response['success']) ? $response['success'] : false;
     }
 
-
-
-    public function start()
-
-    {
+    public function start() {
 
         if (!$this->login()) {
-
             echo "Login Failed !!\n";
-
             return;
-
         }
-
         echo "Logged in.\n";
 
-
-
         if (!$this->start_game()) {
-
             echo "Failed to start game !!\n";
-
             return;
-
         }
-
         echo "Game Started.\n";
 
-
-
-        $this->sleep(42, "Waiting game result");
-
-
+        $this->sleep(48, "Waiting game result");
 
         $this->gameData();
 
-
-
         if (!$this->complete_game()) {
-
             echo "Failed to complete game !!\n";
-
             return;
-
         }
 
-
-
-        echo "Game completed, Coins Received: " . $this->game["log"] . "\n";
-
-
+        echo "Game completed, Coins Received: " . $this->game['log'] . "\n";
 
         $userInfo = $this->user_info();
-
         if ($userInfo) {
-
-            echo "Balance: " .
-
-                $userInfo["data"]["metaInfo"]["totalGrade"] .
-
-                "\n";
-
+            echo "Balance: " . $userInfo['data']['metaInfo']['totalGrade'] . "\n";
         }
-
         $tasks = $this->get_list_tasks();
-
-        if ($tasks && $tasks["success"]) {
-
-            foreach ($tasks["data"]["data"] as $task) {
-
-                foreach ($task["taskList"]["data"] as $subTask) {
-
-                    if (
-
-                        $subTask["status"] !== "COMPLETED" &&
-
-                        $subTask["type"] !== "THIRD_PARTY_BIND"
-
-                    ) {
-
-                        $resourceId = $subTask["resourceId"];
-
-                        $amount = $subTask["rewardList"][0]["amount"];
-
+        if ($tasks && $tasks['success']) {
+            foreach ($tasks['data']['data'] as $task) {
+                foreach ($task['taskList']['data'] as $subTask) {
+                    if ($subTask['status'] !== 'COMPLETED' && $subTask['type'] !== 'THIRD_PARTY_BIND') {
+                        $resourceId = $subTask['resourceId'];
+                        $amount = $subTask['rewardList'][0]['amount'];
                         if ($this->complete_task($resourceId)) {
-
                             echo "Task completed successfully: Reward: $amount\n";
-
                         }
-
                     }
-
                 }
-
             }
-
         } else {
-
             echo "No tasks available\n";
-
         }
-
     }
 
-
-
-    public function sleep($sec, $dat)
-
-    {
-
+    public function sleep($sec, $dat) {
         for ($i = $sec; $i >= 0; $i--) {
-
             echo "$dat for $i seconds\r";
-
             sleep(1);
-
         }
-
     }
-
 }
-
-
 
 while (true) {
-
-    $tokens = file("query.txt", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-
+    $tokens = file('query.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
     foreach ($tokens as $token) {
-
         echo "=============================\n";
-
         $moon = new MoonBix(trim($token));
-
         $moon->start();
-
         echo "=============================\n";
-
         sleep(5);
-
     }
-
-    $moon->sleep(600, "Sleeping");
-
+    $rand_sleep = rand(450, 750);
+    $moon->sleep($rand_sleep, "Sleeping");
 }
-
