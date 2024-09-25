@@ -324,15 +324,34 @@ class MoonBix {
 }
 
 while (true) {
+    $startTime = time(); // Track the start time
     $tokens = file('query.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $elapsedTime = 0;
 
     foreach ($tokens as $token) {
         echo "=============================\n";
         $moon = new MoonBix(trim($token));
         $moon->start();
         echo "=============================\n";
-        sleep(5);
+        sleep(5); // Wait before processing the next token
+
+        // Update elapsed time
+        $elapsedTime = time() - $startTime;
+
+        // If an hour has passed, break out of the loop
+        if ($elapsedTime >= 3600) {
+            echo "Restarting the script after 1 hour...\n";
+            exec("php " . __FILE__ . " > /dev/null 2>&1 &"); // Restart the script
+            break 2; // Break out of both foreach and while loops
+        }
     }
+
+    // If the loop hasn't exited, calculate random sleep time
     $rand_sleep = rand(450, 750);
-    $moon->sleep($rand_sleep, "Sleeping");
+    
+    // Check again before sleeping
+    $elapsedTime = time() - $startTime;
+    if ($elapsedTime < 3600) {
+        $moon->sleep($rand_sleep, "Sleeping");
+    }
 }
